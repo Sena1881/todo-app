@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo Uygulamam</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 50px;
+        }
+        h1 {
+            color: #333;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 250px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+            width: 330px;
+        }
+        li {
+            background: white;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Yapılacaklar Listesi</h1>
+    <div>
+        <input type="text" id="todoInput" placeholder="Yeni bir görev yaz...">
+        <button id="addButton">Ekle</button>
+    </div>
+    <ul id="todoList"></ul>
+
+    <script>
+        loadTodos();
+
+        function loadTodos() {
+            fetch('/todos')
+                .then(response => response.json())
+                .then(todos => {
+                    const list = document.getElementById('todoList');
+                    list.innerHTML = '';
+                    todos.forEach(todo => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `
+                            <span style="text-decoration: ${todo.completed ? 'line-through' : 'none'}; cursor: pointer;" 
+                                  onclick="toggleTodo(${todo.id})">
+                                ${todo.title}
+                            </span>
+                            <button style="background: red; font-size: 12px; padding: 5px;" onclick="deleteTodo(${todo.id})">Sil</button>
+                        `;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        function addTodo() {
+            const input = document.getElementById('todoInput');
+            const title = input.value;
+            if (!title) return;
+
+            fetch('/todos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title, completed: false })
+            }).then(() => {
+                input.value = '';
+                loadTodos();
+            });
+        }
+
+        document.getElementById('addButton').addEventListener('click', addTodo);
+
+        function toggleTodo(id) {
+            fetch('/todos/' + id, { method: 'PUT' })
+                .then(() => loadTodos());
+        }
+
+        function deleteTodo(id) {
+            fetch('/todos/' + id, { method: 'DELETE' })
+                .then(() => loadTodos());
+        }
+    </script>
+</body>
+</html>
